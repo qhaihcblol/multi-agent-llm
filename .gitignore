@@ -1,0 +1,4 @@
+.conda/
+.env
+!webapp/backend/.gitkeep
+!webapp/frontend/.gitkeep
