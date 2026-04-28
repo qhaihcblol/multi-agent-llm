@@ -2,7 +2,7 @@ from typing import Any
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from ..schemas.chunk import Chunk
+from ..schemas import Chunk
 
 
 class Chunker:

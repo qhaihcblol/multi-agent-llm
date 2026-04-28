@@ -1,22 +1,23 @@
-from typing import Any
+from chromadb.api.types import QueryResult, Where
 
 from .embedder import Embedder
 from .vector_store import VectorStore
 
 
 class Retriever:
-    def __init__(self, vector_store: VectorStore, embedder: Embedder):
+    def __init__(self, vector_store: VectorStore, embedder: Embedder) -> None:
         self.vector_store = vector_store
         self.embedder = embedder
 
-    def retrieve(self, query: str, top_k: int = 5, where: dict[str, Any] | None = None):
-        # Embedding query
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+        where: Where | None = None,
+    ) -> QueryResult:
         query_embedding = self.embedder.embed_query(query)
-        # Search
-        results = self.vector_store.search(
+        return self.vector_store.search(
             query_embeddings=query_embedding,
             n_results=top_k,
             where=where,
         )
-        return results
-    

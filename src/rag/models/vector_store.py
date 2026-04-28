@@ -1,11 +1,12 @@
 import chromadb
 import numpy as np
 from chromadb.api.types import (
-    OneOrMany,
-    Metadata,
-    ID,
-    Embedding,
     Document,
+    Embedding,
+    ID,
+    Metadata,
+    OneOrMany,
+    QueryResult,
     Where,
 )
 from chromadb.config import Settings
@@ -17,7 +18,7 @@ class VectorStore:
         collection_name: str = "rag_store",
         persist_dir: str = "./chroma_db",
         distance_metric: str = "cosine",
-    ):
+    ) -> None:
         self.client = chromadb.PersistentClient(
             path=persist_dir,
             settings=Settings(anonymized_telemetry=False),
@@ -34,7 +35,6 @@ class VectorStore:
         metadatas: OneOrMany[Metadata] | None = None,
         documents: OneOrMany[Document] | None = None,
     ) -> None:
-
         if isinstance(embeddings, np.ndarray) and embeddings.ndim == 1:
             embeddings = [embeddings]
 
@@ -50,11 +50,9 @@ class VectorStore:
         query_embeddings: OneOrMany[Embedding],
         n_results: int = 5,
         where: Where | None = None,
-        
-    ):
+    ) -> QueryResult:
         if isinstance(query_embeddings, np.ndarray) and query_embeddings.ndim == 1:
             query_embeddings = [query_embeddings]
-
 
         return self.collection.query(
             query_embeddings=query_embeddings,

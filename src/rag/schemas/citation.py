@@ -1,9 +1,13 @@
-from pydantic import BaseModel
 from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class Citation(BaseModel):
     id: str
-    document: str
-    metadata: dict[str, Any] = {}
-    distance: float
+    text: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    score: float
+
+    class Config:
+        frozen = True
