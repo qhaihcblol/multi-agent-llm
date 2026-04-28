@@ -5,8 +5,10 @@
 !webapp/frontend/.gitkeep
 
 logs/
+!logs/.gitkeep
 
 data/
+!data/.gitkeep
 
 __pycache__/
 *.py[cod]
