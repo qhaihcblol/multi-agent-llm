@@ -4,10 +4,10 @@
 !webapp/backend/.gitkeep
 !webapp/frontend/.gitkeep
 
-logs/
+logs/*
 !logs/.gitkeep
 
-data/
+data/*
 !data/.gitkeep
 
 __pycache__/
