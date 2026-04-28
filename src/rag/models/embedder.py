@@ -41,3 +41,24 @@ class Embedder:
             batch_size=self.batch_size,
         )
         return embeddings
+
+
+if __name__ == "__main__":
+    embedder = Embedder(device="cpu")
+
+    # Test single query
+    q_emb = embedder.embed_query("hello world")
+    print("Query embedding dtype:", q_emb.dtype)
+    print("Query embedding shape:", q_emb.shape)
+
+    # Test batch documents
+    docs = ["hello world", "multi agent rag", "embedding test"]
+    d_emb = embedder.embed_documents(docs)
+    print("Docs embedding dtype:", d_emb.dtype)
+    print("Docs embedding shape:", d_emb.shape)
+
+    # Test multiple queries
+    queries = ["what is rag?", "how embedding works?"]
+    qs_emb = embedder.embed_queries(queries)
+    print("Queries embedding dtype:", qs_emb.dtype)
+    print("Queries embedding shape:", qs_emb.shape)
