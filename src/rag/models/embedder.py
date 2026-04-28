@@ -3,38 +3,41 @@ import numpy as np
 
 
 class Embedder:
-    def __init__(
-        self,
-        model_name: str = "all-MiniLM-L6-v2",
-        device: str | None = None,
-        batch_size: int = 64,
-    ):
+    _instances = {}
+
+    def __new__(cls, model_name="all-MiniLM-L6-v2", device=None, batch_size=64):
+        key = f"{model_name}:{device}"
+        if key not in cls._instances:
+            instance = super().__new__(cls)
+            instance._init(model_name, device, batch_size)
+            cls._instances[key] = instance
+        return cls._instances[key]
+
+    def _init(self, model_name, device, batch_size):
         self.model = SentenceTransformer(model_name, device=device)
         self.batch_size = batch_size
 
-    def embed_documents(self, texts: list[str]) -> np.ndarray:
-        return self.model.encode(
-            texts,
+    def embed_documents(self, docs: list[str]) -> np.ndarray:
+        embeddings = self.model.encode(
+            docs,
             normalize_embeddings=True,
             convert_to_numpy=True,
             batch_size=self.batch_size,
-            show_progress_bar=False
+            show_progress_bar=False,
         )
+        return embeddings
 
     def embed_query(self, query: str) -> np.ndarray:
-        return self.model.encode(
+        embedding = self.model.encode(
             query, normalize_embeddings=True, convert_to_numpy=True
         )
+        return embedding
 
-# if __name__ == "__main__":
-#     embedder = Embedder(model_name="all-MiniLM-L6-v2", device="cpu",batch_size=64)
-#     documents = [
-#         "The cat is on the roof.",
-#         "The dog is in the garden.",
-#         "The bird is flying in the sky."
-#     ]
-#     query = "Where is the cat?"
-#     doc_embeddings = embedder.embed_documents(documents)
-#     query_embedding = embedder.embed_query(query)
-#     print("Document Embeddings:", doc_embeddings)
-#     print("Query Embedding:", query_embedding)
+    def embed_queries(self, queries: list[str]) -> np.ndarray:
+        embeddings = self.model.encode(
+            queries,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+            batch_size=self.batch_size,
+        )
+        return embeddings
