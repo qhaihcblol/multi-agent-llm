@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
-from src.rag.models import Chunker
+from src.rag.components import Chunker
 
 
 def main():
-    file_path = Path("data/raw_docs/doc1.txt")
+    file_path = Path("data/processed_docs/doc1.txt")
     output_path = Path("data/chunks/doc1_chunks.json")
 
     # đảm bảo folder tồn tại

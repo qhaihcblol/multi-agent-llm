@@ -1,5 +1,6 @@
 .conda/
 .env
+.env.example
 
 !webapp/backend/.gitkeep
 !webapp/frontend/.gitkeep

@@ -8,6 +8,3 @@ class Citation(BaseModel):
     text: str
     metadata: dict[str, Any] = Field(default_factory=dict)
     score: float
-
-    class Config:
-        frozen = True
