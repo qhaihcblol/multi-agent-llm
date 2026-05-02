@@ -2,6 +2,7 @@ from typing import ClassVar
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from ..schemas.chunk import Chunk
 
 
 class Embedder:
@@ -33,6 +34,9 @@ class Embedder:
             show_progress_bar=False,
         )
         return embeddings
+
+    def embed_chunks(self, chunks: list[Chunk]) -> np.ndarray:
+        return self.embed_documents([c.text for c in chunks])
 
     def embed_query(self, query: str) -> np.ndarray:
         embedding = self.model.encode(

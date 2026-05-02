@@ -2,7 +2,7 @@ from typing import Any
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from ..schemas import Chunk
+from ..schemas.chunk import Chunk
 
 
 class Chunker:
@@ -149,3 +149,17 @@ class Chunker:
             )
 
         return chunks
+
+if __name__ == "__main__":
+    import json
+
+    sample_text = (
+        "This is a sample document to demonstrate the Chunker component. "
+        "It will be split into smaller chunks based on the specified parameters. "
+        "The chunking process will ensure that each chunk is of manageable size and overlaps appropriately."
+    )
+
+    chunker = Chunker(chunk_size=50, chunk_overlap=10, min_chunk_size=20)
+    chunks = chunker.split(text=sample_text, doc_id="sample_doc")
+
+    print(chunks[0])

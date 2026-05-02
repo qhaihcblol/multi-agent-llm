@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from src.rag.components import Chunker
+from ..src.rag.components.chunker import Chunker
 
 
 def main():

@@ -10,7 +10,7 @@ from chromadb.api.types import (
     Where,
 )
 from chromadb.config import Settings
-
+from ..schemas.chunk import Chunk
 
 class VectorStore:
     def __init__(
@@ -44,7 +44,14 @@ class VectorStore:
             metadatas=metadatas,
             documents=documents,
         )
-
+    def add_chunks(self, chunks: list[Chunk], embeddings: np.ndarray):
+        self.add(
+            ids=[c.id for c in chunks],
+            embeddings=embeddings,
+            metadatas=[c.metadata for c in chunks],
+            documents=[c.text for c in chunks],
+        )
+        
     def search(
         self,
         query_embeddings: OneOrMany[Embedding],

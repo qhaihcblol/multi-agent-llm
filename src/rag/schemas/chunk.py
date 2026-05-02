@@ -1,12 +1,13 @@
 from dataclasses import dataclass, field
-from typing import Any
+
+MetadataValue = str | int | float | bool
 
 
 @dataclass(slots=True)
 class Chunk:
     id: str
     text: str
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, MetadataValue] = field(default_factory=dict)
 
     def __len__(self) -> int:
         return len(self.text)
