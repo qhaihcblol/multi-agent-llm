@@ -50,7 +50,9 @@ class Chunker:
             add_start_index=True,
         )
 
-    def _normalize_bounds(self, start: int, end: int, source_text: str) -> tuple[int, int]:
+    def _normalize_bounds(
+        self, start: int, end: int, source_text: str
+    ) -> tuple[int, int]:
         if start < 0 or end < 0:
             return -1, -1
 
@@ -150,8 +152,8 @@ class Chunker:
 
         return chunks
 
+
 if __name__ == "__main__":
-    import json
 
     sample_text = (
         "This is a sample document to demonstrate the Chunker component. "
