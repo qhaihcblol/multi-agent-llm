@@ -5,7 +5,7 @@ from src.rag.orchestrator.ingestor import Ingestor
 
 
 def main():
-    
+
     chunker = Chunker(
         chunk_size=600,
         chunk_overlap=60,
@@ -14,7 +14,7 @@ def main():
     embedder = Embedder(model_name="all-MiniLM-L6-v2", device="cpu")
 
     vector_store = VectorStore(
-        collection_name="test_collection_2", persist_dir="./data/embeddings/chroma_db"
+        collection_name="test_collection", persist_dir="./data/embeddings/chroma_db"
     )
 
     # 2. init ingestor
