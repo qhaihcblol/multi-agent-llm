@@ -1,10 +1,14 @@
-from typing import Any
-
 from pydantic import BaseModel, Field
+
+MetadataValue = str | int | float | bool
 
 
 class Citation(BaseModel):
-    id: str
+    doc_id: str
+    chunk_id: str
+    chunk_index: int
+
     text: str
-    metadata: dict[str, Any] = Field(default_factory=dict)
     score: float
+
+    metadata: dict[str, MetadataValue] = Field(default_factory=dict)

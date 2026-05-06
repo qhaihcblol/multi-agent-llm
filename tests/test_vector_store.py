@@ -1,41 +1,46 @@
+import random
 from src.rag.components.vector_store import VectorStore
+from src.rag.schemas.chunk import Chunk
 
 
 def main():
-    vs = VectorStore(
+    vector_store = VectorStore(
         collection_name="test_collection",
         persist_dir="./data/embeddings/chroma_db",
     )
 
-    target_id = "doc2_c59b3bfa_00018"
+    data = vector_store.collection.get(include=["documents", "metadatas"])
 
-    data = vs.collection.get(
-        ids=[target_id],
-        include=["documents", "metadatas", "embeddings"],
-    )
+    ids = data.get("ids", [])
+    docs = data.get("documents", [])
+    metas = data.get("metadatas", [])
 
-    if not data["ids"]:
+    if not ids:
         print("Không tìm thấy chunk")
         return
 
-    docs = data["documents"] or []
-    metas = data["metadatas"] or []
-    embs = data["embeddings"]
-
-    if docs is None or metas is None or embs is None:
+    if docs is None or metas is None:
         print("Không có dữ liệu đầy đủ")
         return
 
-    text = docs[0]
-    meta = metas[0]
-    emb = embs[0]
+    chunks = [
+        Chunk(id=cid, text=doc, metadata=meta or {}) # type: ignore
+        for cid, doc, meta in zip(ids, docs, metas)
+    ]
 
-    print(f"ID: {target_id}")
-    print(f"doc_id: {meta.get('doc_id')}, chunk: {meta.get('chunk_index')}")
-    print(f"text: {text[:200].replace('\n', ' ')}...")
+    sample_size = min(5, len(chunks))
+    sampled_chunks = random.sample(chunks, sample_size)
 
-    # shape
-    print(f"embedding dim: ({len(emb)})")
+    print(f"Total chunks: {len(chunks)} | Sampling: {sample_size}\n")
+
+    for i, chunk in enumerate(sampled_chunks, 1):
+        print(f"--- Chunk {i} ---")
+        print(f"id: {chunk.id}")
+        print(f"doc_id: {chunk.metadata.get('doc_id')}")
+        print(f"chunk_index: {chunk.metadata.get('chunk_index')}")
+        print(f"length: {len(chunk)}")
+        print(f"text: {chunk.preview(200).replace('\\n', ' ')}")
+        print()
 
 
 if __name__ == "__main__":
