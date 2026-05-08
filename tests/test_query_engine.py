@@ -21,8 +21,7 @@ def main():
     # One
     retriever = Retriever(embedder=embedder, vector_store=vector_store)
 
-    api_key = os.getenv("OPENAI_API_KEY") or "your-api"
-    config = OpenAIConfig(api_key=api_key)
+    config = OpenAIConfig.from_env()
     llm_client = OpenAIClient(config=config)
 
     # Two
@@ -42,7 +41,7 @@ def main():
     question = "How did Betty Ford and Eleanor Roosevelt break the traditional boundaries of the role of First Lady to become influential figures in national debates?"
     # question = "What is Covid-1"
     result = query_engine.ask(question=question, top_k=10)
-    
+
     print("\n" + "=" * 80)
     print("SYSTEM PROMPT")
     print("=" * 80)
@@ -52,7 +51,7 @@ def main():
     print("PROMPT")
     print("=" * 80)
     print(result.prompt)
-    
+
     print("\n" + "=" * 80)
     print("QUESTION")
     print("=" * 80)
@@ -66,6 +65,7 @@ def main():
     print("\n" + "=" * 80)
     print("QUERY COMPLETED")
     print("=" * 80)
+
 
 if __name__ == "__main__":
     main()
