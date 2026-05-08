@@ -33,7 +33,7 @@ class PromptBuilder:
 
         return "\n\n---\n\n".join(blocks)
 
-    def _build_instruction(self) -> str:
+    def _build_system_prompt(self) -> str:
         return "\n".join(
             [
                 "You are a reliable AI assistant.",
@@ -49,8 +49,6 @@ class PromptBuilder:
     def _build_prompt(self, question: str, context: str) -> str:
         return "\n".join(
             [
-                self._build_instruction(),
-                "",
                 "Context:",
                 context,
                 "",
@@ -63,11 +61,12 @@ class PromptBuilder:
 
     def build(
         self, question: str, chunks: list[RetrievedChunk]
-    ) -> tuple[str, list[Citation]]:
+    ) -> tuple[str, str, list[Citation]]:
         chunks = sorted(chunks, key=lambda x: x.score, reverse=True)
 
         context = self._build_context(chunks)
         citations = self._build_citations(chunks)
+        system_prompt = self._build_system_prompt()
         prompt = self._build_prompt(question, context)
 
-        return prompt, citations
+        return system_prompt, prompt, citations

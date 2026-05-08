@@ -28,8 +28,10 @@ def main():
     ]
 
     question = "What methods are used for face generation?"
-    prompt, citations = builder.build(question, chunks)
+    system_prompt, prompt, citations = builder.build(question, chunks)
 
+    print("===== SYSTEM PROMPT =====\n")
+    print(system_prompt)
     print("===== GENERATED PROMPT =====\n")
     print(prompt)
 
