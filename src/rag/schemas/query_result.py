@@ -12,3 +12,4 @@ class QueryResult:
     chunks: list[RetrievedChunk] = field(default_factory=list)
     system_prompt: str = ""
     prompt: str = ""
+# Sẽ được loại bỏ hoặc đổi với 1 cái tên khác
