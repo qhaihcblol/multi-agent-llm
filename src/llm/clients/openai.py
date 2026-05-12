@@ -50,7 +50,7 @@ class OpenAIClient(BaseLLMClient):
             raise ValueError("prompt must not be empty.")
         return prompt
 
-    def generate_text(
+    def create(
         self,
         system_prompt: str,
         prompt: str,
@@ -76,7 +76,7 @@ class OpenAIClient(BaseLLMClient):
 
         return response.output_text
 
-    def generate_structured(
+    def parse(
         self,
         system_prompt: str,
         prompt: str,

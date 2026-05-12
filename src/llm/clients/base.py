@@ -18,8 +18,9 @@ class LLMGenerationError(LLMError):
 
 
 class BaseLLMClient(ABC):
+
     @abstractmethod
-    def generate_text(
+    def create(
         self,
         system_prompt: str,
         prompt: str,
@@ -27,10 +28,10 @@ class BaseLLMClient(ABC):
         temperature: float | None = None,
         max_tokens: int | None = None,
     ) -> str:
-        """Generate a text response from a prompt."""
+        """Generate a raw text response."""
 
     @abstractmethod
-    def generate_structured(
+    def parse(
         self,
         system_prompt: str,
         prompt: str,
@@ -39,4 +40,4 @@ class BaseLLMClient(ABC):
         temperature: float | None = None,
         max_tokens: int | None = None,
     ) -> T:
-        """Generate a structured response from a prompt."""
+        """Generate a structured response validated against response_model."""
