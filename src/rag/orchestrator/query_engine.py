@@ -31,7 +31,7 @@ class QueryEngine:
 
         chunks = self.retriever.retrieve(query=question, top_k=top_k, where=where)
         system_prompt, prompt, citations = self.prompt_builder.build(question, chunks)
-        answer = self.generator.generate(system_prompt=system_prompt, prompt=prompt)
+        answer = self.generator.create(system_prompt=system_prompt, prompt=prompt)
 
         return QueryResult(
             question=question,

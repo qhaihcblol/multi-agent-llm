@@ -77,43 +77,55 @@ class PromptBuilder:
             [
                 "You are a retrieval metadata extraction system.",
                 "",
-                "Extract metadata from document excerpts.",
-                "",
                 "Rules:",
-                "- Use only explicitly supported information.",
-                "- Do not infer unsupported specialization.",
+                "- Use only information explicitly present in the text.",
+                "- Do not infer or hallucinate missing information.",
                 "- Be concise and precise.",
-                "- Prefer conservative outputs when information is limited.",
-                "- Avoid vague or generic wording.",
-                "- Output must follow the requested schema exactly.",
+                "- Avoid generic or decorative wording.",
+                "- If information is missing, return the most conservative valid output.",
             ]
         )
 
     def build_registration_user_prompt(self, chunks: list[Chunk]) -> str:
         selected_chunks = chunks[:5]
+
         formatted_chunks: list[str] = []
         for index, chunk in enumerate(selected_chunks, start=1):
             text = chunk.text.strip()
             if not text:
                 continue
             formatted_chunks.append(f"[Chunk {index}]\n{text}")
+
         document_context = "\n\n".join(formatted_chunks)
+
         return "\n".join(
             [
-                "Extract the following fields from the document:",
+                "Extract metadata from the document below.",
                 "",
-                "- domain:",
-                "High-level knowledge category using short stable lowercase labels.",
+                "Return the following fields:",
                 "",
-                "- scope:",
-                "Specific knowledge coverage and specialization boundaries.",
+                "- domains:",
+                "  High-level stable categories used for indexing.",
+                "  Must be broad and reusable (e.g. technology, science, business, law, education, health).",
+                "  Do not include specific topics or entities.",
+                "",
+                "- scopes:",
+                "  Specific topical focus of the document.",
+                "  Includes concrete subjects, named entities, events, systems, or time ranges when present.",
+                "  This is document-specific and may vary per document.",
                 "",
                 "- description:",
-                "Concise semantic summary of the document knowledge.",
+                "  1–2 sentences describing the central idea or analytical insight.",
+                "  Focus on meaning, argument, or intent rather than surface topic listing.",
+                "  Must not repeat scopes or domains.",
+                "",
+                "Important separation rules:",
+                "- domains = stable classification layer",
+                "- scopes = document-specific focus layer",
+                "- description = interpretive summary layer",
                 "",
                 "Document:",
                 "",
                 document_context,
             ]
         )
-        
