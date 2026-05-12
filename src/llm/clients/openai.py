@@ -1,8 +1,10 @@
+from typing import TypeVar, Type
 from openai import OpenAI
-
+from pydantic import BaseModel, ValidationError
 from .base import BaseLLMClient, LLMConfigurationError, LLMGenerationError
 from ..configs.openai import OpenAIConfig
-from openai.types.responses import Response
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class OpenAIClient(BaseLLMClient):
@@ -20,18 +22,13 @@ class OpenAIClient(BaseLLMClient):
             timeout=config.timeout,
         )
 
-    def generate(
+    def _resolve_params(
         self,
-        system_prompt: str,
-        prompt: str,
-        model: str | None = None,
-        temperature: float | None = None,
-        max_tokens: int | None = None,
-    ) -> str:
-        prompt = prompt.strip()
-        if not prompt:
-            raise ValueError("prompt must not be empty.")
-
+        model: str | None,
+        temperature: float | None,
+        max_tokens: int | None,
+    ) -> tuple[str, float, int]:
+        """Merge call-level overrides with instance defaults, then validate."""
         model = model or self.default_model
         if not model:
             raise LLMConfigurationError("No model was provided for generation.")
@@ -39,10 +36,32 @@ class OpenAIClient(BaseLLMClient):
         temperature = self.default_temperature if temperature is None else temperature
         max_tokens = self.default_max_tokens if max_tokens is None else max_tokens
 
-        if max_tokens <= 0:
-            raise ValueError("max_tokens must be > 0.")
         if not 0.0 <= temperature <= 2.0:
             raise ValueError("temperature must be between 0.0 and 2.0.")
+        if max_tokens <= 0:
+            raise ValueError("max_tokens must be > 0.")
+
+        return model, temperature, max_tokens
+
+    @staticmethod
+    def _validate_prompt(prompt: str) -> str:
+        prompt = prompt.strip()
+        if not prompt:
+            raise ValueError("prompt must not be empty.")
+        return prompt
+
+    def generate_text(
+        self,
+        system_prompt: str,
+        prompt: str,
+        model: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> str:
+        prompt = self._validate_prompt(prompt)
+        model, temperature, max_tokens = self._resolve_params(
+            model, temperature, max_tokens
+        )
 
         try:
             response = self.client.responses.create(
@@ -55,26 +74,43 @@ class OpenAIClient(BaseLLMClient):
         except Exception as exc:
             raise LLMGenerationError(f"OpenAI request failed: {exc}") from exc
 
-        text = self._extract_text(response)
-        if not text:
-            raise LLMGenerationError("OpenAI returned an empty response.")
+        return response.output_text
 
-        return text
+    def generate_structured(
+        self,
+        system_prompt: str,
+        prompt: str,
+        response_model: Type[T],
+        model: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> T:
+        prompt = self._validate_prompt(prompt)
+        model, temperature, max_tokens = self._resolve_params(
+            model, temperature, max_tokens
+        )
 
-    def _extract_text(self, response: Response) -> str:
-        if getattr(response, "output_text", None):
-            return response.output_text.strip()
+        try:
+            response = self.client.responses.parse(
+                instructions=system_prompt,
+                model=model,
+                input=prompt,
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+                text_format=response_model,
+            )
+        except ValidationError as exc:
+            # Model response did not match the expected schema
+            raise LLMGenerationError(
+                f"Response did not match schema {response_model.__name__}: {exc}"
+            ) from exc
+        except Exception as exc:
+            raise LLMGenerationError(f"OpenAI request failed: {exc}") from exc
 
-        output = getattr(response, "output", []) or []
-        fragments: list[str] = []
+        if response.output_parsed is None:
+            raise LLMGenerationError(
+                "Model refused to generate structured output "
+                "(likely triggered safety filter)."
+            )
 
-        for item in output:
-            content = getattr(item, "content", []) or []
-
-            for block in content:
-                if getattr(block, "type", None) == "output_text":
-                    text = getattr(block, "text", None)
-                    if text:
-                        fragments.append(text)
-
-        return "".join(fragments).strip()
+        return response.output_parsed

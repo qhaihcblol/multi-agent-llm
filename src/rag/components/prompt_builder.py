@@ -1,9 +1,10 @@
 from ..schemas.retrieved_chunk import RetrievedChunk
 from ..schemas.citation import Citation
+from ..schemas.chunk import Chunk
 
 
 class PromptBuilder:
-    def _build_citations(self, chunks: list[RetrievedChunk]) -> list[Citation]:
+    def build_citations(self, chunks: list[RetrievedChunk]) -> list[Citation]:
         citations: list[Citation] = []
         for chunk in chunks:
             metadata = chunk.metadata or {}
@@ -19,7 +20,7 @@ class PromptBuilder:
             )
         return citations
 
-    def _build_context(self, chunks: list[RetrievedChunk]) -> str:
+    def build_context(self, chunks: list[RetrievedChunk]) -> str:
         if not chunks:
             return "No context provided."
 
@@ -33,7 +34,7 @@ class PromptBuilder:
 
         return "\n\n---\n\n".join(blocks)
 
-    def _build_system_prompt(self) -> str:
+    def build_system_prompt(self) -> str:
         return "\n".join(
             [
                 "You are a reliable AI assistant.",
@@ -46,7 +47,7 @@ class PromptBuilder:
             ]
         )
 
-    def _build_prompt(self, question: str, context: str) -> str:
+    def build_prompt(self, question: str, context: str) -> str:
         return "\n".join(
             [
                 "Context:",
@@ -64,9 +65,55 @@ class PromptBuilder:
     ) -> tuple[str, str, list[Citation]]:
         chunks = sorted(chunks, key=lambda x: x.score, reverse=True)
 
-        context = self._build_context(chunks)
-        citations = self._build_citations(chunks)
-        system_prompt = self._build_system_prompt()
-        prompt = self._build_prompt(question, context)
+        context = self.build_context(chunks)
+        citations = self.build_citations(chunks)
+        system_prompt = self.build_system_prompt()
+        prompt = self.build_prompt(question, context)
 
         return system_prompt, prompt, citations
+
+    def build_registration_system_prompt(self) -> str:
+        return "\n".join(
+            [
+                "You are a retrieval metadata extraction system.",
+                "",
+                "Extract metadata from document excerpts.",
+                "",
+                "Rules:",
+                "- Use only explicitly supported information.",
+                "- Do not infer unsupported specialization.",
+                "- Be concise and precise.",
+                "- Prefer conservative outputs when information is limited.",
+                "- Avoid vague or generic wording.",
+                "- Output must follow the requested schema exactly.",
+            ]
+        )
+
+    def build_registration_user_prompt(self, chunks: list[Chunk]) -> str:
+        selected_chunks = chunks[:5]
+        formatted_chunks: list[str] = []
+        for index, chunk in enumerate(selected_chunks, start=1):
+            text = chunk.text.strip()
+            if not text:
+                continue
+            formatted_chunks.append(f"[Chunk {index}]\n{text}")
+        document_context = "\n\n".join(formatted_chunks)
+        return "\n".join(
+            [
+                "Extract the following fields from the document:",
+                "",
+                "- domain:",
+                "High-level knowledge category using short stable lowercase labels.",
+                "",
+                "- scope:",
+                "Specific knowledge coverage and specialization boundaries.",
+                "",
+                "- description:",
+                "Concise semantic summary of the document knowledge.",
+                "",
+                "Document:",
+                "",
+                document_context,
+            ]
+        )
+        

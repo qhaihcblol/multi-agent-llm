@@ -63,6 +63,20 @@ def main():
     print(result.answer)
 
     print("\n" + "=" * 80)
+    print("CITATIONS")
+    print("=" * 80)
+    for i, citation in enumerate(result.citations, start=1):
+        print(f"=== Citation {i} ===")
+        print(f"Doc ID     : {citation.doc_id}")
+        print(f"Chunk ID   : {citation.chunk_id}")
+        print(f"Chunk Index: {citation.chunk_index}")
+        print(f"Score      : {citation.score:.4f}")
+        print(f"Metadata   : {citation.metadata}")
+        print("Text:")
+        print(citation.text)
+        print()
+        
+    print("\n" + "=" * 80)
     print("QUERY COMPLETED")
     print("=" * 80)
 
