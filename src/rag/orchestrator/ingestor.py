@@ -7,8 +7,8 @@ from ..components.embedder import Embedder
 from ..components.generator import Generator
 from ..components.prompt_builder import PromptBuilder
 from ..components.vector_store import VectorStore
+from ..entities.registration_agent import RegistrationAgent
 from ..schemas.chunk import Chunk
-from ..schemas.llm_responses.node_metadata import NodeMetadata
 
 
 class Ingestor:
@@ -17,21 +17,39 @@ class Ingestor:
         chunker: Chunker,
         embedder: Embedder,
         vector_store: VectorStore,
-        generator: Generator,
-        prompt_builder: PromptBuilder,
-        storage_path: str | Path,
+        registration_agent: RegistrationAgent | None = None,
+        generator: Generator | None = None,
+        prompt_builder: PromptBuilder | None = None,
+        storage_path: str | Path | None = None,
         chunks_storage_dir: str | Path = "data/chunks",
     ) -> None:
         self.chunker = chunker
         self.embedder = embedder
         self.vector_store = vector_store
-        self.generator = generator
-        self.prompt_builder = prompt_builder
-
-        self.storage_path = Path(storage_path)
-        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        self.registration_agent = registration_agent or self._build_registration_agent(
+            generator=generator,
+            prompt_builder=prompt_builder,
+            storage_path=storage_path,
+        )
         self.chunks_storage_dir = Path(chunks_storage_dir)
         self.chunks_storage_dir.mkdir(parents=True, exist_ok=True)
+
+    def _build_registration_agent(
+        self,
+        generator: Generator | None,
+        prompt_builder: PromptBuilder | None,
+        storage_path: str | Path | None,
+    ) -> RegistrationAgent:
+        if generator is None or prompt_builder is None or storage_path is None:
+            raise ValueError(
+                "Either registration_agent must be provided, or generator, "
+                "prompt_builder, and storage_path must all be set."
+            )
+        return RegistrationAgent(
+            generator=generator,
+            prompt_builder=prompt_builder,
+            storage_path=storage_path,
+        )
 
     def _load_document(self, doc_path: str) -> str:
         path = Path(doc_path)
@@ -44,9 +62,6 @@ class Ingestor:
     def _create_doc_id(self, doc_path: str) -> str:
         return f"{Path(doc_path).stem}_{uuid.uuid4().hex[:8]}"
 
-    def _create_node_id(self, doc_id: str) -> str:
-        return f"node_{doc_id}"
-
     def ingest(self, doc_path: str, name: str | None = None) -> str:
         text = self._load_document(doc_path)
         doc_id = self._create_doc_id(doc_path)
@@ -54,36 +69,13 @@ class Ingestor:
         embeddings = self.embedder.embed_chunks(chunks)
         self.vector_store.add_chunks(chunks, embeddings)
         self._save_chunks(chunks, doc_id)
-
-        system_prompt = self.prompt_builder.build_registration_system_prompt()
-        user_prompt = self.prompt_builder.build_registration_user_prompt(chunks)
-        node_metadata = self.generator.parse(system_prompt, user_prompt, NodeMetadata)
-
-        node = {
-            "id": self._create_node_id(doc_id),
-            "doc_id": doc_id,
-            "name": name or Path(doc_path).stem,
-            "domains": node_metadata.domains,
-            "scopes": node_metadata.scopes,
-            "description": node_metadata.description,
-        }
-        self._save_node_metadata(node)
-        return doc_id
-
-    def _save_node_metadata(self, node: dict) -> None:
-        if self.storage_path.exists():
-            try:
-                existing = json.loads(self.storage_path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                existing = []
-        else:
-            existing = []
-
-        existing.append(node)
-        self.storage_path.write_text(
-            json.dumps(existing, ensure_ascii=False, indent=2),
-            encoding="utf-8",
+        
+        self.registration_agent.register(
+            doc_id=doc_id,
+            chunks=chunks,
+            name=name or Path(doc_path).stem,
         )
+        return doc_id
 
     def _save_chunks(self, chunks: list[Chunk], doc_id: str) -> None:
         chunk_data = [

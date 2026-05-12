@@ -5,17 +5,17 @@ class Node:
     def __init__(
         self,
         id: str,
-        domain: str,
+        domains: str,
         description: str,
-        scope: str,
+        scopes: str,
         doc_id: str,
         retriever: Retriever,
         name: str | None = None,
     ):
         self.id = id
-        self.domain = domain
+        self.domains = domains
         self.description = description
-        self.scope = scope
+        self.scopes = scopes
         self.doc_id = doc_id
         self.retriever = retriever
 
