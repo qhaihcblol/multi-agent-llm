@@ -33,7 +33,7 @@ class PromptBuilder:
             blocks.append(block)
 
         return "\n\n---\n\n".join(blocks)
-
+    # Default RAG system prompt
     def build_system_prompt(self) -> str:
         return "\n".join(
             [
@@ -46,8 +46,8 @@ class PromptBuilder:
                 '- If unsure, say "I don\'t know"',
             ]
         )
-
-    def build_prompt(self, question: str, context: str) -> str:
+    # Default RAG user prompt
+    def build_user_prompt(self, question: str, context: str) -> str:
         return "\n".join(
             [
                 "Context:",
@@ -59,7 +59,7 @@ class PromptBuilder:
                 "Answer:",
             ]
         )
-
+    # Default RAG build
     def build(
         self, question: str, chunks: list[RetrievedChunk]
     ) -> tuple[str, str, list[Citation]]:
@@ -68,10 +68,10 @@ class PromptBuilder:
         context = self.build_context(chunks)
         citations = self.build_citations(chunks)
         system_prompt = self.build_system_prompt()
-        prompt = self.build_prompt(question, context)
+        prompt = self.build_user_prompt(question, context)
 
         return system_prompt, prompt, citations
-
+    # Registration system prompt
     def build_registration_system_prompt(self) -> str:
         return "\n".join(
             [
@@ -85,7 +85,7 @@ class PromptBuilder:
                 "- If information is missing, return the most conservative valid output.",
             ]
         )
-
+    # Registration user prompt
     def build_registration_user_prompt(self, chunks: list[Chunk]) -> str:
         selected_chunks = chunks[:5]
 
@@ -129,3 +129,28 @@ class PromptBuilder:
                 document_context,
             ]
         )
+    # Stage 1 system prompt
+    def build_create_point_system_prompt(self):
+        return "\n".join(
+            [
+                "You are a point extraction system.",
+                "",
+                "Rules:",
+                ""
+            ]
+        )
+    def build_create_point_user_prompt(self, question: str, context: str) -> str:
+        return "\n".join(
+            [
+                "Extract concise points from the context that are relevant to the question.",
+                "",
+                "Context:",
+                context,
+                "",
+                "Question:",
+                question,
+                "",
+                "Points:",
+            ]
+        )
+    

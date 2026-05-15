@@ -1,0 +1,2 @@
+class DeleteAgent:
+    pass
