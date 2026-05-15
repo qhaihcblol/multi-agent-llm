@@ -60,14 +60,16 @@ class RegisterAgent:
         )
 
     # Ingest the document
-    def ingest(self, doc_path: Path, chunks_storage_dir: Path) -> str:
+    def ingest(
+        self, doc_path: Path, chunks_storage_dir: Path
+    ) -> tuple[str, list[Chunk]]:
         text = self._load_document(doc_path)
         doc_id = self._create_doc_id(doc_path)
         chunks = self.chunker.split(text=text, doc_id=doc_id)
         embeddings = self.embedder.embed_chunks(chunks)
         self.vector_store.add_chunks(chunks, embeddings)
         self._save_chunks(chunks, doc_id, chunks_storage_dir)
-        return doc_id
+        return doc_id, chunks
 
     def _create_node_id(self, doc_id: str) -> str:
         return f"node_{doc_id}"
@@ -76,29 +78,6 @@ class RegisterAgent:
         system_prompt = self.prompt_builder.build_registration_system_prompt()
         user_prompt = self.prompt_builder.build_registration_user_prompt(chunks)
         return self.generator.parse(system_prompt, user_prompt, NodeMetadata)
-
-    def _build_node(
-        self, doc_id: str, node_metadata: NodeMetadata, name: str | None = None
-    ) -> Node:
-        return Node(
-            id=self._create_node_id(doc_id),
-            doc_id=doc_id,
-            name=name or doc_id,
-            domains=node_metadata.domains,
-            scopes=node_metadata.scopes,
-            description=node_metadata.description,
-            retriever=self.retriever,
-        )
-
-    def _serialize_node(self, node: Node) -> dict[str, Any]:
-        return {
-            "id": node.id,
-            "doc_id": node.doc_id,
-            "name": node.name,
-            "domains": node.domains,
-            "scopes": node.scopes,
-            "description": node.description,
-        }
 
     def register(
         self,
@@ -112,9 +91,16 @@ class RegisterAgent:
         if not chunks:
             raise ValueError("chunks must not be empty.")
 
+        node_id = self._create_node_id(doc_id)
         node_metadata = self._extract_node_metadata(chunks)
-        node = self._build_node(doc_id=doc_id, node_metadata=node_metadata, name=name)
-        self._save_node_metadata(self._serialize_node(node), storage_path)
+        node = Node.from_metadata(
+            metadata=node_metadata,
+            id=node_id,
+            doc_id=doc_id,
+            retriever=self.retriever,
+            name=name,
+        )
+        self._save_node_metadata(node.to_dict(), storage_path)
         return node
 
     def _load_existing_nodes(self, storage_path: Path) -> list[dict[str, Any]]:

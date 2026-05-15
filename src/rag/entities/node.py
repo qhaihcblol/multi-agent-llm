@@ -1,6 +1,8 @@
 from ..components.retriever import Retriever
 from ..schemas.retrieved_chunk import RetrievedChunk
 from ..schemas.llm_responses.node_metadata import NodeMetadata
+from typing import Any
+
 
 class Node:
     def __init__(
@@ -45,3 +47,18 @@ class Node:
             scopes=metadata.scopes,
             description=metadata.description,
         )
+
+    def to_metadata(self) -> NodeMetadata:
+        return NodeMetadata(
+            domains=self.domains,
+            scopes=self.scopes,
+            description=self.description,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "doc_id": self.doc_id,
+            "name": self.name,
+            **self.to_metadata().model_dump(),
+        }
