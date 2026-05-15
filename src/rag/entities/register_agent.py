@@ -7,9 +7,11 @@ from ..components.chunker import Chunker
 from ..components.embedder import Embedder
 from ..components.generator import Generator
 from ..components.prompt_builder import PromptBuilder
+from ..components.retriever import Retriever
 from ..components.vector_store import VectorStore
 from ..schemas.chunk import Chunk
 from ..schemas.llm_responses.node_metadata import NodeMetadata
+from .node import Node
 
 
 class RegisterAgent:
@@ -26,6 +28,7 @@ class RegisterAgent:
         self.vector_store = vector_store
         self.generator = generator
         self.prompt_builder = prompt_builder
+        self.retriever = Retriever(vector_store=vector_store, embedder=embedder)
 
     def _load_document(self, doc_path: Path) -> str:
         if not doc_path.exists():
@@ -76,14 +79,25 @@ class RegisterAgent:
 
     def _build_node(
         self, doc_id: str, node_metadata: NodeMetadata, name: str | None = None
-    ) -> dict[str, Any]:
+    ) -> Node:
+        return Node(
+            id=self._create_node_id(doc_id),
+            doc_id=doc_id,
+            name=name or doc_id,
+            domains=node_metadata.domains,
+            scopes=node_metadata.scopes,
+            description=node_metadata.description,
+            retriever=self.retriever,
+        )
+
+    def _serialize_node(self, node: Node) -> dict[str, Any]:
         return {
-            "id": self._create_node_id(doc_id),
-            "doc_id": doc_id,
-            "name": name or doc_id,
-            "domains": node_metadata.domains,
-            "scopes": node_metadata.scopes,
-            "description": node_metadata.description,
+            "id": node.id,
+            "doc_id": node.doc_id,
+            "name": node.name,
+            "domains": node.domains,
+            "scopes": node.scopes,
+            "description": node.description,
         }
 
     def register(
@@ -92,7 +106,7 @@ class RegisterAgent:
         chunks: list[Chunk],
         storage_path: Path,
         name: str | None = None,
-    ) -> str:
+    ) -> Node:
         if not doc_id.strip():
             raise ValueError("doc_id must not be empty.")
         if not chunks:
@@ -100,8 +114,8 @@ class RegisterAgent:
 
         node_metadata = self._extract_node_metadata(chunks)
         node = self._build_node(doc_id=doc_id, node_metadata=node_metadata, name=name)
-        self._save_node_metadata(node, storage_path)
-        return doc_id
+        self._save_node_metadata(self._serialize_node(node), storage_path)
+        return node
 
     def _load_existing_nodes(self, storage_path: Path) -> list[dict[str, Any]]:
         if not storage_path.exists():
