@@ -7,33 +7,35 @@ T = TypeVar("T", bound=BaseModel)
 
 class Generator:
 
-    def __init__(
+    def __init__(self, llm_client: BaseLLMClient) -> None:
+        self.llm = llm_client
+
+    def create(
         self,
-        llm_client: BaseLLMClient,
-        model_name: str | None = None,
+        system_prompt: str,
+        prompt: str,
         temperature: float | None = None,
         max_tokens: int | None = None,
-    ) -> None:
-        self.llm = llm_client
-        self.model_name = model_name
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-
-    def create(self, system_prompt: str, prompt: str) -> str:
+    ) -> str:
         return self.llm.create(
             system_prompt=system_prompt,
             prompt=prompt,
-            model=self.model_name,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
 
-    def parse(self, system_prompt: str, prompt: str, response_model: Type[T]) -> T:
+    def parse(
+        self,
+        system_prompt: str,
+        prompt: str,
+        response_model: Type[T],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+    ) -> T:
         return self.llm.parse(
             system_prompt=system_prompt,
             prompt=prompt,
             response_model=response_model,
-            model=self.model_name,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
