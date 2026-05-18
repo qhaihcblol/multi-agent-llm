@@ -44,4 +44,7 @@ class Retriever:
                 )
             )
 
+        # Sort chunks by score in descending order
+        chunks.sort(key=lambda chunk: chunk.score, reverse=True)
+
         return chunks
