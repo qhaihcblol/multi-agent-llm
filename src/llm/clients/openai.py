@@ -28,18 +28,13 @@ class OpenAIClient(BaseLLMClient):
         temperature: float | None,
         max_tokens: int | None,
     ) -> tuple[str, float, int]:
-        """Merge call-level overrides with instance defaults, then validate."""
+        """Merge call-level overrides with instance defaults."""
         model = model or self.default_model
         if not model:
             raise LLMConfigurationError("No model was provided for generation.")
 
         temperature = self.default_temperature if temperature is None else temperature
         max_tokens = self.default_max_tokens if max_tokens is None else max_tokens
-
-        if not 0.0 <= temperature <= 2.0:
-            raise ValueError("temperature must be between 0.0 and 2.0.")
-        if max_tokens <= 0:
-            raise ValueError("max_tokens must be > 0.")
 
         return model, temperature, max_tokens
 

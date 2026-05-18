@@ -1,6 +1,5 @@
 from src.rag.schemas.retrieved_chunk import RetrievedChunk
 from src.rag.components.prompt_builder import PromptBuilder
-from src.rag.schemas.citation import Citation
 
 
 def main():

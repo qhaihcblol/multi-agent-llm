@@ -33,6 +33,7 @@ class PromptBuilder:
             blocks.append(block)
 
         return "\n\n---\n\n".join(blocks)
+
     # Default RAG system prompt
     def build_system_prompt(self) -> str:
         return "\n".join(
@@ -46,6 +47,7 @@ class PromptBuilder:
                 '- If unsure, say "I don\'t know"',
             ]
         )
+
     # Default RAG user prompt
     def build_user_prompt(self, question: str, context: str) -> str:
         return "\n".join(
@@ -59,11 +61,11 @@ class PromptBuilder:
                 "Answer:",
             ]
         )
+
     # Default RAG build
     def build(
         self, question: str, chunks: list[RetrievedChunk]
     ) -> tuple[str, str, list[Citation]]:
-        chunks = sorted(chunks, key=lambda x: x.score, reverse=True)
 
         context = self.build_context(chunks)
         citations = self.build_citations(chunks)
@@ -71,6 +73,7 @@ class PromptBuilder:
         prompt = self.build_user_prompt(question, context)
 
         return system_prompt, prompt, citations
+
     # Registration system prompt
     def build_registration_system_prompt(self) -> str:
         return "\n".join(
@@ -85,6 +88,7 @@ class PromptBuilder:
                 "- If information is missing, return the most conservative valid output.",
             ]
         )
+
     # Registration user prompt
     def build_registration_user_prompt(self, chunks: list[Chunk]) -> str:
         selected_chunks = chunks[:5]
@@ -129,20 +133,30 @@ class PromptBuilder:
                 document_context,
             ]
         )
+
     # Stage 1 system prompt
     def build_create_point_system_prompt(self):
         return "\n".join(
             [
-                "You are a point extraction system.",
+                "You are a point extraction system for retrieval-augmented generation.",
                 "",
                 "Rules:",
-                ""
+                "- Produce exactly one atomic point.",
+                "- The point must be directly relevant to the question.",
+                "- Keep the point concise, specific, and factual.",
+                "- Prefer a focused paraphrase of the best supporting evidence over a broad summary.",
+                "- Do not merge multiple claims into one point.",
+                "- Use only information explicitly supported by the provided context.",
+                "- If the context does not support a relevant point, return an empty text.",
+                "- When text is empty, return no source indices.",
+                "- Source indices must refer only to the numbered context blocks.",
             ]
         )
+
     def build_create_point_user_prompt(self, question: str, context: str) -> str:
         return "\n".join(
             [
-                "Extract concise points from the context that are relevant to the question.",
+                "Extract the single best point from the context that helps answer the question.",
                 "",
                 "Context:",
                 context,
@@ -150,7 +164,12 @@ class PromptBuilder:
                 "Question:",
                 question,
                 "",
-                "Points:",
+                "Response requirements:",
+                "- Return one concise point only.",
+                "- If the context does not support a relevant point, set text to an empty string and source_indices to an empty list.",
+                "- If text is not empty, include only the source indices that directly support it.",
+                "- Use the smallest possible set of source indices.",
+                "- Do not include sources that are only loosely related.",
+                "- Favor the most relevant chunk over wider context when possible.",
             ]
         )
-    
